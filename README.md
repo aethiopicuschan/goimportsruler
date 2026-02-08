@@ -1,8 +1,8 @@
 # Go Imports Ruler
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen?style=flat-square)](/LICENSE)
-[![Go Reference](https://pkg.go.dev/badge/github.com/aethiopicuschan/goimportsruler.svg)](https://pkg.go.dev/github.com/aethiopicuschan/goimportsruler)
 [![GitHub Action](https://img.shields.io/badge/GitHub%20Action-goimportsruler-blue?logo=github-actions)](https://github.com/marketplace/actions/goimportsruler)
+[![Go Reference](https://pkg.go.dev/badge/github.com/aethiopicuschan/goimportsruler.svg)](https://pkg.go.dev/github.com/aethiopicuschan/goimportsruler)
 [![Go Report Card](https://goreportcard.com/badge/github.com/aethiopicuschan/goimportsruler)](https://goreportcard.com/report/github.com/aethiopicuschan/goimportsruler)
 [![CI](https://github.com/aethiopicuschan/goimportsruler/actions/workflows/ci.yaml/badge.svg)](https://github.com/aethiopicuschan/goimportsruler/actions/workflows/ci.yaml)
 [![codecov](https://codecov.io/gh/aethiopicuschan/goimportsruler/graph/badge.svg?token=9cPFqNxKJC)](https://codecov.io/gh/aethiopicuschan/goimportsruler)
