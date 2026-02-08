@@ -48,16 +48,29 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          BASE=${{ github.event.pull_request.base.sha }}
-          MB=$(git merge-base "$BASE" HEAD)
-          FILES=$(git diff --name-only "$MB" HEAD | grep '\.go$' || true)
-          COUNT=$(echo "$FILES" | sed '/^$/d' | wc -l)
+
+          # Decide base revision by event type
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE="${{ github.event.before }}"
+          fi
+
+          # Handle first push where "before" is all zeros (no parent)
+          if [ -z "${BASE}" ] || [ "${BASE}" = "0000000000000000000000000000000000000000" ]; then
+            MB="$(git hash-object -t tree /dev/null)"   # empty tree
+          else
+            MB="$(git merge-base "${BASE}" HEAD)"
+          fi
+
+          FILES="$(git diff --name-only "${MB}" HEAD | grep '\.go$' || true)"
+          COUNT="$(echo "${FILES}" | sed '/^$/d' | wc -l)"
 
           {
             echo "go_files<<EOF"
-            echo "$FILES"
+            echo "${FILES}"
             echo "EOF"
-            echo "go_count=$COUNT"
+            echo "go_count=${COUNT}"
           } >> "$GITHUB_OUTPUT"
 
   # =========================================================
