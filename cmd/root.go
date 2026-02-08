@@ -85,6 +85,7 @@ func run(cmd *cobra.Command, args []string) (err error) {
 		return
 	}
 
+	// --- Walk and check violations ---
 	ctx := ctxrw.NewContextWriter().SetConfig(context.Background(), *cfg)
 
 	w, err := walker.NewWalker(ctx, start)
