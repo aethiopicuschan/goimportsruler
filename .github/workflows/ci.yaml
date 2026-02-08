@@ -173,9 +173,9 @@ jobs:
         with:
           fetch-depth: 1
       - name: Detect CJK text
-        uses: aethiopicuschan/nocjk/actions/nocjk-action@v1.2.0
+        uses: aethiopicuschan/nocjk@v1
         with:
+          args: "."
           ignore_chinese: false
           ignore_japanese: false
           ignore_korean: false
-          args: "."
