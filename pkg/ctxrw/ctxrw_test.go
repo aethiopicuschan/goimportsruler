@@ -12,6 +12,8 @@ import (
 func TestContextWriter_SetConfig(t *testing.T) {
 	t.Parallel()
 
+	type key string
+	const unrelated key = "unrelated"
 	tests := []struct {
 		name string
 		ctx  context.Context
@@ -24,7 +26,7 @@ func TestContextWriter_SetConfig(t *testing.T) {
 		},
 		{
 			name: "works with derived context",
-			ctx:  context.WithValue(context.Background(), "unrelated", "value"),
+			ctx:  context.WithValue(context.Background(), unrelated, "value"),
 			cfg:  *config.ExampleConfig(),
 		},
 	}
