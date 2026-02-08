@@ -35,8 +35,6 @@ You may run the command from **any subdirectory** of the target Go module.
 If any rule is violated, `goimportsruler` exits with a non-zero status code,  
 making it suitable for use in CI pipelines.
 
----
-
 ### Example Output
 
 ```sh
@@ -169,8 +167,6 @@ The following patterns behave as:
 
 ⚠️ The examples above assume that the directory structure directly corresponds to import paths.
 
----
-
 ## Absolute vs Relative Import Path Patterns
 
 Patterns can be written in **two equivalent forms**:
@@ -181,8 +177,6 @@ Patterns can be written in **two equivalent forms**:
   - e.g. `example.com/myapp/cmd/**`
 
 Both forms are supported and matched automatically.
-
----
 
 ## Banning External Modules
 
