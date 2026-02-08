@@ -1,0 +1,18 @@
+name: "Go Imports Ruler Action"
+description: "Run goimportsruler command easily in GitHub Actions"
+
+inputs:
+  args:
+    description: "Arguments to pass to goimportsruler"
+    required: false
+    default: "."
+
+runs:
+  using: "docker"
+  image: "Dockerfile"
+  args:
+    - ${{ inputs.args }}
+
+branding:
+  icon: "check-circle"
+  color: "blue"

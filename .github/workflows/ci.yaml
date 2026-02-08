@@ -1,0 +1,178 @@
+name: CI
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # =========================================================
+  # 1. Analyze diff（only fetch-depth:0）
+  # =========================================================
+  changes:
+    runs-on: ubuntu-slim
+    timeout-minutes: 3
+    outputs:
+      go: ${{ steps.filter.outputs.go }}
+      go_mod: ${{ steps.filter.outputs.go_mod }}
+      go_files: ${{ steps.diff.outputs.go_files }}
+      go_count: ${{ steps.diff.outputs.go_count }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: filter
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            go:
+              - '**/*.go'
+              - 'go.mod'
+              - 'go.sum'
+            go_mod:
+              - 'go.mod'
+              - 'go.sum'
+
+      - name: Compute Go diff (FAST)
+        id: diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=${{ github.event.pull_request.base.sha }}
+          MB=$(git merge-base "$BASE" HEAD)
+          FILES=$(git diff --name-only "$MB" HEAD | grep '\.go$' || true)
+          COUNT=$(echo "$FILES" | sed '/^$/d' | wc -l)
+
+          {
+            echo "go_files<<EOF"
+            echo "$FILES"
+            echo "EOF"
+            echo "go_count=$COUNT"
+          } >> "$GITHUB_OUTPUT"
+
+  # =========================================================
+  # 2. Fast Go (gofmt + staticcheck)
+  # =========================================================
+  fast-go:
+    needs: changes
+    if: needs.changes.outputs.go == 'true'
+    runs-on: ubuntu-slim
+    timeout-minutes: 6
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Cache Go tools
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/bin
+          key: ${{ runner.os }}-go-tools-${{ hashFiles('go.mod', '.github/go-tools.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-go-tools-
+
+      - name: Install Go tools
+        run: |
+          xargs -n1 go install < .github/go-tools.txt
+
+      # ---- gofmt (changed .go only)
+      - name: gofmt
+        shell: bash
+        run: |
+          set -euo pipefail
+          FILES="${{ needs.changes.outputs.go_files }}"
+          [ -z "$FILES" ] && exit 0
+          # NOTE: file names with spaces are rare in Go repos; if you care, switch to NUL-delimited diff.
+          test -z "$(echo "$FILES" | xargs -d '\n' gofmt -l)"
+
+      # ---- staticcheck
+      - name: staticcheck
+        shell: bash
+        run: |
+          set -euo pipefail
+          COUNT=${{ needs.changes.outputs.go_count }}
+          FILES="${{ needs.changes.outputs.go_files }}"
+          GO_MOD_CHANGED="${{ needs.changes.outputs.go_mod }}"
+
+          # If deps changed, do full scan (safer).
+          if [ "$GO_MOD_CHANGED" = "true" ]; then
+            staticcheck ./...
+            exit 0
+          fi
+
+          # If many files changed, do full scan.
+          if [ "$COUNT" -gt 15 ]; then
+            staticcheck ./...
+            exit 0
+          fi
+
+          pkgs=$(echo "$FILES" \
+            | xargs -d '\n' -n1 dirname | sort -u \
+            | xargs -d '\n' -n1 go list 2>/dev/null || true)
+
+          [ -z "$pkgs" ] && exit 0
+          echo "$pkgs" | xargs -d '\n' staticcheck
+
+  # =========================================================
+  # 3. Go test（If lint passed only, and only when Go changed）
+  # =========================================================
+  go-test:
+    needs: fast-go
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - run: go test -coverprofile=coverage.txt ./pkg/...
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  # =========================================================
+  # 4. Code quality: typos, nocjk
+  # =========================================================
+  typos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Check spelling
+        uses: crate-ci/typos@v1
+
+  nocjk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Detect CJK text
+        uses: aethiopicuschan/nocjk/actions/nocjk-action@v1.2.0
+        with:
+          ignore_chinese: false
+          ignore_japanese: false
+          ignore_korean: false
+          args: "."

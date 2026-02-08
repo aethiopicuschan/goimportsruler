@@ -1,0 +1,17 @@
+pre-commit:
+  parallel: true
+  commands:
+    go-lint:
+      run: staticcheck ./...
+    go-fmt:
+      run: |
+        files=$(gofmt -l .)
+        if [ -n "$files" ]; then
+          echo "The following files are not properly formatted:"
+          echo "$files"
+          exit 1
+        fi
+    typos:
+      run: typos
+    nocjk:
+      run: nocjk .

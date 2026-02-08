@@ -1,0 +1,21 @@
+# Trash
+.DS_Store
+
+# env files
+.env
+
+# Editor
+.vscode
+.idea
+.zed
+
+# compiled binaries
+goimportsruler
+
+# config files
+goimportsruler.json
+goimportsruler.yaml
+goimportsruler.yml
+.goimportsruler.json
+.goimportsruler.yaml
+.goimportsruler.yml
