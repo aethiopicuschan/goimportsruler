@@ -27,6 +27,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Fetch base branch (PR only)
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch --no-tags --prune --depth=1 origin "${{ github.base_ref }}"
+
       - id: filter
         uses: dorny/paths-filter@v2
         with:
@@ -45,6 +50,8 @@ jobs:
         run: |
           set -euo pipefail
 
+          EMPTY_TREE="$(git hash-object -t tree /dev/null)"
+
           # Decide base revision by event type
           if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
             BASE="${{ github.event.pull_request.base.sha }}"
@@ -52,11 +59,13 @@ jobs:
             BASE="${{ github.event.before }}"
           fi
 
-          # Handle first push where "before" is all zeros (no parent)
           if [ -z "${BASE}" ] || [ "${BASE}" = "0000000000000000000000000000000000000000" ]; then
-            MB="$(git hash-object -t tree /dev/null)"   # empty tree
+            MB="${EMPTY_TREE}"
+          elif ! git cat-file -e "${BASE}^{commit}" 2>/dev/null; then
+            echo "WARN: base commit not found locally: ${BASE}"
+            MB="${EMPTY_TREE}"
           else
-            MB="$(git merge-base "${BASE}" HEAD)"
+            MB="$(git merge-base "${BASE}" HEAD 2>/dev/null || echo "${EMPTY_TREE}")"
           fi
 
           FILES="$(git diff --name-only "${MB}" HEAD | grep '\.go$' || true)"
@@ -143,9 +152,9 @@ jobs:
   # 3. Go test（If lint passed only, and only when Go changed）
   # =========================================================
   go-test:
-    needs: fast-go
+    needs: [changes, fast-go]
+    if: needs.changes.outputs.go == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 8
 
     steps:
       - uses: actions/checkout@v4
