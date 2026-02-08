@@ -10,10 +10,6 @@ permissions:
   contents: read
   pull-requests: read
 
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   # =========================================================
   # 1. Analyze diff（only fetch-depth:0）
