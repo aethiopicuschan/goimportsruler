@@ -126,11 +126,7 @@ var Foo = 1
 					}
 				],
 				"excludes": [
-					{
-						"name": "exclude cmd",
-						"description": "exclude all cmd packages",
-						"sources": ["cmd/**"]
-					}
+					"cmd/**"
 				]
 			}`,
 			files: map[string]string{
