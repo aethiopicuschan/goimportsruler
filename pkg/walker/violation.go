@@ -1,4 +1,3 @@
-// pkg/walker/violation.go
 package walker
 
 import "iter"
