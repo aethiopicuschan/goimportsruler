@@ -80,22 +80,11 @@ A minimal example configuration looks like this:
       "name": "Ban pkg to cmd",
       "description": "Disallow imports from pkg to cmd",
       "sources": ["pkg/**"],
-      "disallow": ["cmd/**"]
-    },
-    {
-      "name": "Ban testify",
-      "description": "Disallow importing testify",
-      "sources": ["**"],
-      "disallow": ["github.com/stretchr/testify/**"]
+      "disallow": ["cmd/**"],
+      "excludes": ["."]
     }
   ],
-  "excludes": [
-    {
-      "name": "Vendor",
-      "description": "Vendor directory is excluded from checks",
-      "sources": ["vendor/**"]
-    }
-  ]
+  "excludes": ["vendor/**"]
 }
 ```
 
@@ -106,10 +95,8 @@ A minimal example configuration looks like this:
   - `description`: A brief explanation of the rule (**optional**).
   - `sources`: Source **import path patterns** to which the rule applies.
   - `disallow`: Import path or external module patterns that are not allowed for the given sources.
-- `excludes`: Defines source packages that are completely excluded from checks.
-  - `name`: A descriptive name for the exclude rule (**optional but recommended**).
-  - `description`: A brief explanation of the exclude rule (**optional**).
-  - `sources`: Source import path patterns to be excluded.
+  - `excludes`: Source import path patterns to be excluded from this rule (i.e. the rule does not apply to these sources).
+- `excludes`: Source import path patterns to be excluded from **all rules** (i.e. no rules apply to these sources).
 
 When a source package matches an exclude rule, **all checks for that package are skipped entirely**.
 
@@ -128,12 +115,13 @@ When a source package matches an exclude rule, **all checks for that package are
 
 ## Pattern Matching
 
-The `sources` and `disallow` fields support glob-like pattern matching to specify **import paths and external module paths**.
+The `sources`, `disallow` and `excludes` fields support glob-like pattern matching to specify **import paths and external module paths**.
 
 Patterns are matched against **import paths**, not directory names, file names, or package declarations.
 
 ### Syntax
 
+- `.` — Matches the current package (i.e. main package in the root of the module)
 - `*` — Matches any characters within a single path segment (does not match `/`)
 - `**` — Matches zero or more path segments (can cross `/`)
 
@@ -143,6 +131,7 @@ Given the following directory structure:
 
 ```sh
 .
+├── main.go
 ├── cmd
 │   ├── app.go
 │   └── server
@@ -164,6 +153,7 @@ The following patterns behave as:
 - `internal/*` → matches `internal` but not `internal/helper`
 - `**/logger` → matches `internal/logger`
 - `**` → matches all import paths
+- `.` -> matches the main package in the root of the module (e.g. `main.go`)
 
 ⚠️ The examples above assume that the directory structure directly corresponds to import paths.
 

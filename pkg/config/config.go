@@ -16,7 +16,7 @@ import (
 type Config struct {
 	configFileName string
 	rules          []Rule
-	excludes       []Exclude
+	excludes       []Package
 }
 
 // ConfigFileName returns the name of the configuration file.
@@ -30,7 +30,7 @@ func (c *Config) Rules() []Rule {
 }
 
 // Excludes returns the list of excludes.
-func (c *Config) Excludes() []Exclude {
+func (c *Config) Excludes() []Package {
 	return c.excludes
 }
 
@@ -40,7 +40,7 @@ func (c *Config) toDTO() *config {
 		rules[i] = r.toDTO()
 	}
 
-	excludes := make([]exclude, len(c.Excludes()))
+	excludes := make([]pack, len(c.Excludes()))
 	for i, e := range c.Excludes() {
 		excludes[i] = e.toDTO()
 	}
@@ -70,8 +70,8 @@ func (c *Config) ToYAML(w io.Writer) (err error) {
 }
 
 type config struct {
-	Rules    []rule    `json:"rules" yaml:"rules"`
-	Excludes []exclude `json:"excludes" yaml:"excludes"`
+	Rules    []rule `json:"rules" yaml:"rules"`
+	Excludes []pack `json:"excludes" yaml:"excludes"`
 }
 
 func (c *config) toConfig() *Config {
@@ -80,9 +80,9 @@ func (c *config) toConfig() *Config {
 		rules[i] = r.toRule()
 	}
 
-	excludes := make([]Exclude, len(c.Excludes))
+	excludes := make([]Package, len(c.Excludes))
 	for i, ig := range c.Excludes {
-		excludes[i] = ig.toExclude()
+		excludes[i] = ig.toPackage()
 	}
 
 	return &Config{
@@ -185,16 +185,13 @@ func ExampleConfig() (c *Config) {
 				Disallow: []pack{
 					"cmd/**",
 				},
-			},
-		},
-		Excludes: []exclude{
-			{
-				Name:        "Vendor",
-				Description: "Vendor directory is excluded",
-				Sources: []pack{
-					"vendor/**",
+				Excludes: []pack{
+					".",
 				},
 			},
+		},
+		Excludes: []pack{
+			"vendor/**",
 		},
 	}
 	c = internal.toConfig()

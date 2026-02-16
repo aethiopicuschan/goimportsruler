@@ -115,6 +115,13 @@ func (w *Walker) Walk(ctx context.Context, roots ...string) (ve ViolationsError,
 						continue
 					}
 
+					// If the import matches any allowed pattern, skip to the next rule without checking disallowed patterns.
+					if len(rule.Excludes()) > 0 {
+						if anyMatch2(rule.Excludes(), srcAbs, srcRel) {
+							continue // Allowed import, skip to next rule.
+						}
+					}
+
 					// A violation occurs if the import matches any disallowed pattern (absolute or relative).
 					if anyMatch2(rule.Disallow(), impAbs, impRel) {
 						pos := imp.Pos()
@@ -202,12 +209,7 @@ func (w *Walker) importToImportPaths(importPath string) (abs string, rel string)
 }
 
 func isExcluded(cfg config.Config, srcAbs, srcRel string) bool {
-	for _, ex := range cfg.Excludes() {
-		if anyMatch2(ex.Sources(), srcAbs, srcRel) {
-			return true
-		}
-	}
-	return false
+	return anyMatch2(cfg.Excludes(), srcAbs, srcRel)
 }
 
 // anyMatch2 matches patterns against both absolute and relative targets.
